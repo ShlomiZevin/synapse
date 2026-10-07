@@ -1,0 +1,156 @@
+{
+  "direction": "A bioluminescent microscope pond with a cute glowing cell and a luminous brain panel.",
+  "palette": [
+    {
+      "name": "deep",
+      "hex": "#0b1026",
+      "use": "background"
+    },
+    {
+      "name": "fluid",
+      "hex": "#1c2a5a",
+      "use": "panels and membranes"
+    },
+    {
+      "name": "glim",
+      "hex": "#28e0c8",
+      "use": "the cell and positive threads"
+    },
+    {
+      "name": "food",
+      "hex": "#ffd86b",
+      "use": "treats, rewards, stars"
+    },
+    {
+      "name": "danger",
+      "hex": "#ff4f6d",
+      "use": "poison and negative threads"
+    },
+    {
+      "name": "mind",
+      "hex": "#b48cff",
+      "use": "hidden neurons"
+    }
+  ],
+  "layers": [
+    "drawBackdrop",
+    "drawMotes",
+    "drawBrain",
+    "drawPond",
+    "drawCell",
+    "drawGraph",
+    "drawToolbar"
+  ],
+  "world": [
+    {
+      "id": "backdrop",
+      "drawFn": "drawBackdrop",
+      "look": "deep gradient with soft membrane rings",
+      "colors": [
+        "deep",
+        "fluid"
+      ]
+    },
+    {
+      "id": "pond",
+      "drawFn": "drawPond",
+      "look": "a round-cornered glowing pond tinted by the signal",
+      "colors": [
+        "fluid",
+        "glim"
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "id": "cell",
+      "drawFn": "drawCell",
+      "look": "translucent teal blob with big eyes, cheeks, a nucleus and waving tails",
+      "parts": [
+        "glow",
+        "tails",
+        "membrane",
+        "nucleus",
+        "eyes",
+        "mouth"
+      ],
+      "colors": [
+        "glim",
+        "mind"
+      ],
+      "motion": "membrane wobbles, blinks, eyes drift",
+      "states": [
+        {
+          "when": "listening",
+          "shows": "wide eyes looking at the signal"
+        },
+        {
+          "when": "treat",
+          "shows": "smile and chewing"
+        },
+        {
+          "when": "poison",
+          "shows": "turns green with crossed eyes"
+        },
+        {
+          "when": "sleep",
+          "shows": "flat with closed eyes"
+        }
+      ]
+    },
+    {
+      "id": "brain",
+      "drawFn": "drawBrain",
+      "look": "signal icons, glowing hidden neurons and move icons joined by threads",
+      "parts": [
+        "inputs",
+        "threads",
+        "neurons",
+        "outputs"
+      ],
+      "colors": [
+        "glim",
+        "food",
+        "danger",
+        "mind"
+      ],
+      "motion": "activity glows and pulses travel",
+      "states": [
+        {
+          "when": "reward",
+          "shows": "gold wash and backward wave"
+        },
+        {
+          "when": "poison",
+          "shows": "red wash"
+        }
+      ]
+    }
+  ],
+  "feedback": [
+    {
+      "event": "treat",
+      "effect": "gold drops fly to the cell and the brain flashes gold"
+    },
+    {
+      "event": "poison",
+      "effect": "red drops and a red flash"
+    },
+    {
+      "event": "pass",
+      "effect": "stars and a gold glow"
+    }
+  ],
+  "hud": [
+    {
+      "element": "goal picture",
+      "corner": "top-left",
+      "look": "signal arrow move"
+    },
+    {
+      "element": "toolbar",
+      "corner": "bottom-left",
+      "look": "glowing capsules"
+    }
+  ]
+}

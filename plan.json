@@ -1,0 +1,148 @@
+{
+  "title": "Synapse",
+  "tagline": "Teach a little cell. Watch its brain learn.",
+  "pitch": "A cute glowing cell lives in a pond, and its brain, a real neural network, is always on screen beside it. Shine a light signal, watch what the cell does, then give a treat or poison. You see the threads in its brain strengthen as it learns what each signal means.",
+  "what_you_get": [
+    "A cute, expressive glowing cell in a bioluminescent pond",
+    "Its real neural network always visible, with threads that thicken as it learns",
+    "Eight light signals to teach, one at a time, with the goal shown as a picture",
+    "Left-click for a treat, right-click for poison, with a hint line that says what to do next",
+    "A test after each signal with learning switched off, compared with the cell before training"
+  ],
+  "complexity": 8,
+  "complexity_reason": "A real learning network, a procedurally animated puppy with ten moves, animated hand signals, a training cycle with reward windows, eight lessons with frozen tests, tamagotchi needs, a brain view, saves and phone support.",
+  "fits_tier": true,
+  "orientation": "landscape",
+  "dimension": "2d",
+  "core_loop": "Shine a signal, watch the cell hold one move for about three seconds, then give a treat if it was the right move or poison if not; its brain strengthens or weakens that link.",
+  "player_goal": "Teach the puppy each hand signal so that it does the right move at least 4 times in 5 show-time tries, with as few lessons as possible for three stars.",
+  "controls": {
+    "desktop": "Keys 1-8 or the signal buttons shine a signal. Left-click the pond or G gives a treat, right-click or B gives poison. T test, F speed, Esc pause.",
+    "touch": "Signal buttons, TREAT and POISON buttons, tap the pond for a treat, long press for poison.",
+    "one_button": false,
+    "scheme": [
+      {
+        "verb": "Signal",
+        "keys": "1-8",
+        "touch": "SIGNAL BUTTONS",
+        "does": "Shine a light signal in the pond."
+      },
+      {
+        "verb": "Treat",
+        "keys": "G / left-click the pond",
+        "touch": "TREAT",
+        "does": "Reward what the cell just did."
+      },
+      {
+        "verb": "Poison",
+        "keys": "B / right-click the pond",
+        "touch": "POISON",
+        "does": "Tell the cell that was wrong."
+      },
+      {
+        "verb": "Speed",
+        "keys": "F",
+        "touch": "SPEED",
+        "does": "Toggle x1 and x2."
+      },
+      {
+        "verb": "Test",
+        "keys": "T",
+        "touch": "TEST",
+        "does": "Start the test with learning switched off."
+      },
+      {
+        "verb": "Pause",
+        "keys": "Esc",
+        "touch": "MENU",
+        "does": "Pause, sound, full screen, start over."
+      }
+    ]
+  },
+  "entities": [
+    {
+      "name": "Cell",
+      "role": "player",
+      "behaviour": "Born with ten moves: float, shrink, sleep, spin, hop, come to you, glow, go left, go right, wander. After a signal it looks at the light, then its brain picks one move which it holds about three seconds, then rests while a reward window stays open.",
+      "look": "A translucent teal blob with a wobbling membrane, big shiny eyes, rosy cheeks, a little mouth, a nucleus and waving tails."
+    },
+    {
+      "name": "Signal",
+      "role": "prop",
+      "behaviour": "A glowing symbol shines at the top of the pond for about two and a half seconds and tints the water.",
+      "look": "Eight coloured symbols: sun, triangle, square, moon, spiral, up, left, right."
+    },
+    {
+      "name": "Treat and poison",
+      "role": "collectible",
+      "behaviour": "Left-click sends gold nutrient to the cell (+1.2), right-click sends red poison (-0.7).",
+      "look": "Gold and red glowing drops that fly to the cell."
+    }
+  ],
+  "mechanics": [
+    {
+      "name": "Real learning",
+      "detail": "A neural network with 9 signal inputs, 27 hidden neurons (three tuned to each signal) and 10 move outputs, trained by backpropagation with an advantage actor-critic; clicker +1, treat +1.6, no -0.7.",
+      "essential": true
+    },
+    {
+      "name": "Training cycle",
+      "detail": "Signal, the cell looks at it, one move held 3 s, 2.2 s rest; treat or poison in that window counts for that move.",
+      "essential": true
+    },
+    {
+      "name": "Show time",
+      "detail": "Eight tries (five of the new signal, three review) with learning off; pass needs 4 of 5 and 2 of 3.",
+      "essential": true
+    }
+  ],
+  "progression": "Eight signals unlock one at a time: sun (glow), triangle (come), square (shrink), moon (sleep), spiral (spin), up (hop), left, right. Stars from tries needed: 3 under 30, 2 under 60.",
+  "win_lose": "No losing. Pass show time for stars; finishing all eight completes the game.",
+  "art": {
+    "style": "Bioluminescent microscope: soft glows and fine glowing lines on deep blue-violet.",
+    "mood": "Calm, wondrous, cute.",
+    "palette": [
+      "#0b1026",
+      "#1c2a5a",
+      "#28e0c8",
+      "#ffd86b",
+      "#ff4f6d",
+      "#b48cff"
+    ],
+    "background": "Dark gradient with drifting motes and faint out-of-focus membranes."
+  },
+  "presentation": {
+    "title_screen": "A glowing neural web forming itself, the cell saying hello, the name SYNAPSE and a BEGIN button, with three numbered steps.",
+    "hud": "Top: signal medallions with stars and the goal as a picture. Left: the brain. Right: the pond and a learning graph. Bottom: signal buttons, treat, poison, speed, test, menu.",
+    "typography": "system-ui, light weight, wide letter spacing.",
+    "buttons": "Capsule outlines of light that pulse to show what to press next.",
+    "end_screen": "Before and now tick marks per try, with stars."
+  },
+  "audio": {
+    "feel": "Soft, watery, glassy.",
+    "music": "Slow dreamy ambient.",
+    "music_track": "music/drifting",
+    "sounds": [
+      "signal | a sparkling chime | magic/sparkle",
+      "treat | a soft bubble | water/bubbles",
+      "poison | a wet squelch | scifi/slime",
+      "happy | a cute creature sound | animal/creature_cute",
+      "hop | a boing | toon/boing",
+      "spin | a slide whistle | toon/slide_whistle",
+      "ui | a soft click | ui/click",
+      "lesson passed | a gentle sting | jingle/jingles_steel",
+      "lesson failed | a soft error | ui/error",
+      "ambience | muffled underwater | loop/underwater"
+    ]
+  },
+  "juice": [
+    "The pond is tinted by the signal colour",
+    "Treat and poison drops fly to the cell",
+    "The brain flashes gold or red and a wave runs back through it",
+    "Light pulses travel along the active path",
+    "A graph climbs as it learns"
+  ],
+  "build_notes": "Moves are innate; the network chooses which move each signal means. Verified headless: 16 of 16 brains learn all eight signals.",
+  "saves": "Brain weights, stars, unlocked signals.",
+  "language": "English"
+}
