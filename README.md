@@ -10,7 +10,16 @@ Open `game.html` in a browser. It runs on its own, without sound.
 
 Sound, saving and full screen come from the Plaxzy host (`/public/lib/plaxzy-sound-12.js` and the `Plaxzy` object). The game checks for both and works without them.
 
-## Controls
+## Two modes
+
+- **Lessons** (the starter): eight light signals, taught one at a time with treats and poison. This is where you learn how the cell learns.
+- **Free training:** the cell has a body it can move freely (two arms, a tail, stretch, lean, size, spin, glow, colour). You teach it any routine you like, up to six tricks of up to eight beats each.
+  - **Show:** pose the cell beat by beat, like a puppet. It watches, and its brain moves a little toward what you showed.
+  - **Remind:** show it again. Each time it gets closer.
+  - **Try:** it performs on its own. At first it wobbles.
+  - **Treat / poison:** a treat makes it surer and steadier; poison makes it doubt and forget some of it.
+
+## Controls (lessons)
 
 | Key | Mouse / touch | What it does |
 | --- | --- | --- |
@@ -23,6 +32,17 @@ Sound, saving and full screen come from the Plaxzy host (`/public/lib/plaxzy-sou
 | H | ? | how it works (a six-page guide in plain words) |
 | Esc | MENU | pause, sound, start over |
 
+## Controls (free training)
+
+| Key | Button | What it does |
+| --- | --- | --- |
+| 1 to 6 | trick buttons | pick a trick |
+| S | SHOW | pose a routine (drag the arms, tail and body; arrows change beat; + / - add or remove beats; Enter when done) |
+| R | REMIND | show the routine again |
+| Space | TRY | the cell performs it |
+| G / B | TREAT / POISON | reward or correct the try |
+| Esc | MENU | pause, switch mode |
+
 ## How it works
 
 - **The network:** 9 inputs (8 signals and "no signal"), 27 hidden neurons, 10 outputs (the moves), about 540 weights.
@@ -31,15 +51,21 @@ Sound, saving and full screen come from the Plaxzy host (`/public/lib/plaxzy-sou
 - **What is built in:** the cell is born knowing *how* to do its ten moves. It learns *which* move each signal means. Three hidden neurons start out tuned to each signal, and the biases are frozen, because otherwise one rewarded move takes over every signal.
 - **Moves unlock with lessons:** the cell starts with three moves and gains one per signal, so early lessons are quick.
 
+**Free training uses a second network:** 14 inputs (which trick, which beat), 40 hidden neurons and 13 outputs, one per body part. It learns by backpropagation from the routine you show (learning from demonstration), a few steps per showing, so it improves gradually. Old routines are rehearsed while a new one is learned, so they fade a little but are not lost. Treats and poison change how much the cell wobbles when it performs, and nudge the network toward or away from the routine. Treats alone do not teach a shape; showing does.
+
 Everything drawn in the brain panel is the network's real state: line thickness is weight, the bars are the output odds, and the bright path is each neuron's actual vote for the chosen move.
 
 ## Files
 
 - `src/core.js` the network, the learning rule and the cell's training cycle (no DOM)
 - `src/game.js` drawing, input, lessons, the guide, sound and save
+- `src/studio-core.js` free training: the body, its network and the show / try / reward rules (no DOM)
+- `src/studio.js` free training: the posing tools, timeline, brain view and controls
 - `src/template.html` the page shell
 - `tools/build.js` joins the three into `game.html`: `node tools/build.js`
 - `tools/learn-test.js` headless check that simulated brains really learn all eight signals: `node tools/learn-test.js --lr 0.6`
+- `tools/studio-test.js` headless check for free training (gradual improvement, steadier after treats, old tricks kept): `node tools/studio-test.js`
+- `tools/studio-browser.js` plays free training in a real browser (same needs as below)
 - `tools/browser-test.js` plays lesson 1 in a real browser (needs `playwright-core`, Chrome and the game served on port 5190)
 - `plan.json`, `visual.json` the design notes the game was built from
 

@@ -9,7 +9,7 @@ const SECS=+process.argv[2]||55;
  const errs=[];p.on('pageerror',e=>errs.push(String(e)));p.on('console',m=>{if(m.type()==='error'&&!/404/.test(m.text()))errs.push(m.text());});
  await p.goto('http://localhost:5190');await wait(1500);
  await p.screenshot({path:out+'a_title.png'});
- await p.mouse.click(640,455);await wait(900);
+ await p.mouse.click(640,425);await wait(900);
  const F=()=>p.frames().find(f=>f!==p.mainFrame()&&f.url().length);
  if(await F().evaluate(()=>__synapse.st.screen)!=='play'){await p.mouse.click(640,452);await wait(600);}
  await p.screenshot({path:out+'b_start.png'});

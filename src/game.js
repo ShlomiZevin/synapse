@@ -122,12 +122,13 @@ function drawMoveIcon(m,x,y,r,a){
 }
 
 // ---------- sound ----------
-const SFX_MAX={sig:0.8,treat:1.0,poison:0.9,happy:1.0,pop:0.5,boing:0.8,whirl:1.1,click:0.4,win:2.0,lose:0.8,open:0.6};
+const SFX_MAX={beat:0.2,sig:0.8,treat:1.0,poison:0.9,happy:1.0,pop:0.5,boing:0.8,whirl:1.1,click:0.4,win:2.0,lose:0.8,open:0.6};
 function sfx(n,o){if(!(window.PXS&&PXS.play))return;const h=PXS.play(n,o||{});const m=SFX_MAX[n];if(h&&h.stop&&m)setTimeout(()=>h.stop(),m*1000);}
 function initSound(){
   if(!window.PXS)return;
   PXS.define({sig:'magic/sparkle',treat:'water/bubbles',poison:'scifi/slime',happy:'animal/creature_cute',pop:'toon/pop',boing:'toon/boing',whirl:'toon/slide_whistle',
-    click:'ui/click',win:'jingle/jingles_steel',lose:'ui/error',open:'ui/open'});
+    click:'ui/click',win:'jingle/jingles_steel',lose:'ui/error',open:'ui/open',
+    beat:[0.35,0,180,0.002,0.01,0.06,0,1.6,-8]});
 }
 let amb=null;
 function startAudio(){if(!window.PXS||amb)return;PXS.music('music/drifting');amb=PXS.loop('loop/underwater',{speed:0.3});}
@@ -136,11 +137,12 @@ function setPaused(v){st.paused=v;if(window.PXS){if(v&&PXS.pause)PXS.pause();els
 // ---------- save ----------
 function saveNow(){
   if(!(window.Plaxzy&&Plaxzy.save&&st.brain))return;
-  Plaxzy.save.set({v:4,brain:st.brain.export(),birth:st.birth,stars:st.stars,unlocked:st.unlocked,cur:st.cur,tries:st.tries,upd:st.brain.updates});
+  Plaxzy.save.set({v:4,brain:st.brain.export(),birth:st.birth,stars:st.stars,unlocked:st.unlocked,cur:st.cur,tries:st.tries,upd:st.brain.updates,studio:(sd.S?sd.S.export():st.savedStudio||null)});
   st.dirty=false;st.lastSave=st.t;
 }
 function applySave(d){
   if(!d||typeof d!=='object'||d.v!==4)return;
+  if(d.studio&&typeof d.studio==='object'){st.savedStudio=d.studio;if(sd.S)sd.S.load(d.studio);}
   const b=Brain.fromData(d.brain,mulberry((Math.random()*1e9)|0));if(!b)return;
   const num=(v,lo,hi,df)=>typeof v==='number'&&isFinite(v)?Math.max(lo,Math.min(hi,v)):df;
   st.saved={brain:b,birth:(d.birth&&d.birth.H?d.birth:b.export()),
@@ -157,7 +159,7 @@ function newBrain(){
   st.brain=new Brain(mulberry((Math.random()*1e9)|0),27);st.birth=st.brain.export();
   st.unlocked=1;st.stars=[0,0,0,0,0,0,0,0];st.cur=0;st.tries=[0,0,0,0,0,0,0,0];st.completed=false;freshState();
 }
-function wipeSave(){if(window.Plaxzy&&Plaxzy.save)Plaxzy.save.set({v:4,reset:true});st.saved=null;st.hasSave=false;newBrain();}
+function wipeSave(){if(window.Plaxzy&&Plaxzy.save)Plaxzy.save.set({v:4,reset:true});st.saved=null;st.hasSave=false;st.savedStudio=null;sd.S=null;if(st.screen==='studio'){enterStudio();}else newBrain();}
 
 // ---------- ui plumbing ----------
 let ui=[];const drag={slider:null};
@@ -544,12 +546,14 @@ function drawTitle(){
   // the creature, saying hello
   const save=L.arena;
   const demo={x:WW*0.5,y:WH*0.42,phase:'idle',move:0,walk:0,spin:0,jumpT:0,face:0};st.trail=[];
-  const k=2.1;ctx.save();ctx.translate(cx,SH*0.44);ctx.scale(k,k);ctx.translate(-cx,-SH*0.47);
+  const k=2.1;ctx.save();ctx.translate(cx,SH*0.41);ctx.scale(k,k);ctx.translate(-cx,-SH*0.47);
   L.arena={x:cx-WW/2*0.5,y:SH*0.47-WH*0.42*0.5,k:0.5};drawCell(demo,T);ctx.restore();L.arena=save;
-  const bw=Math.min(260,SW*0.5),bh=54,by=SH*0.6;
+  const bw=Math.min(260,SW*0.5),bh=54,by=SH*0.56;
   titleBtn('BEGIN',cx-bw/2,by,bw,bh,()=>{startAudio();if(st.hasSave)continueSave();else newBrain();st.screen='play';sfx('open');},PAL.glim,true);
   if(st.hasSave)titleBtn('new cell',cx-bw*0.4,by+bh+12,bw*0.8,44,()=>{startAudio();newBrain();st.screen='play';sfx('open');},PAL.mind,false);
-  titleBtn('how it works',cx-bw*0.4,by+bh+12+(st.hasSave?54:0),bw*0.8,44,()=>{st.help=0;sfx('open');},PAL.food,false);
+  const y2=by+bh+12+(st.hasSave?54:0);
+  titleBtn('free training',cx-bw*0.4,y2,bw*0.8,44,()=>{startAudio();enterStudio();sfx('open');},'#ff8fd0',false);
+  titleBtn('how it works',cx-bw*0.4,y2+54,bw*0.8,44,()=>{st.help=0;sfx('open');},PAL.food,false);
   // how it works, in three pictures
   const y0=SH-(portrait?120:84),stepW=Math.min(300,(SW-40)/3),sx=cx-stepW*1.5;
   const steps=[['1','shine a signal'],['2','watch what it does'],['3','treat if right, poison if wrong']];
@@ -579,10 +583,10 @@ function pill(id,label,x,y,w,h,col,on,fn){
 function drawMenu(){
   ctx.fillStyle='rgba(5,8,24,0.82)';ctx.fillRect(0,0,SW,SH);ui=[];
   const hasFs=!!(window.Plaxzy&&Plaxzy.fullscreen),hasS=!!window.PXS;
-  const lines=[['1 - 8','shine a signal'],['G  /  left-click','treat: it was right'],['B  /  right-click','poison: it was wrong'],['drag','move the cell'],['T','test'],['F','speed']];
+  const lines=st.screen==='studio'?[['1 - 6','pick a trick'],['S','show: pose a routine'],['R','remind: show it again'],['Space','try'],['G  /  B','treat  /  poison'],['drag','pose the cell']]:[['1 - 8','shine a signal'],['G  /  left-click','treat: it was right'],['B  /  right-click','poison: it was wrong'],['drag','move the cell'],['T','test'],['F','speed']];
   const showKeys=SH>=560,pw=Math.min(480,SW-30);
   const hKeys=showKeys?lines.length*24+18:0,hSound=hasS?150:0;
-  const ph=64+hKeys+hSound+48+44+70,px=(SW-pw)/2,py=Math.max(10,(SH-ph)/2);
+  const ph=64+hKeys+hSound+48+44+44+70,px=(SW-pw)/2,py=Math.max(10,(SH-ph)/2);
   ctx.save();rr(px,py,pw,ph,22);ctx.fillStyle='rgba(10,16,44,0.98)';ctx.fill();ctx.strokeStyle=hexA(PAL.glim,0.5);ctx.lineWidth=1.3;ctx.stroke();ctx.restore();
   if(st.confirm){
     txt('start over?',SW/2,py+ph*0.3,24,'#e8fffb','center',300,4);
@@ -610,6 +614,8 @@ function drawMenu(){
     pill('newb','new cell',px+38+bw,y,bw,36,PAL.danger,false,()=>{st.confirm=true;});}
   else pill('newb','new cell',px+24,y,pw-48,36,PAL.danger,false,()=>{st.confirm=true;});
   pill('howit','how it works',px+24,py+ph-62-46,pw-48,36,PAL.food,false,()=>{st.help=0;});
+  if(st.screen==='studio')pill('tolessons','go to the lessons',px+24,py+ph-62-90,pw-48,36,PAL.glim,false,()=>{setPaused(false);if(st.hasSave&&!st.brain.updates)continueSave();st.screen='play';sfx('open');});
+  else if(st.screen==='play')pill('tostudio','go to free training',px+24,py+ph-62-90,pw-48,36,'#ff8fd0',false,()=>{setPaused(false);enterStudio();sfx('open');});
   titleBtn('resume',px+24,py+ph-62,pw-48,46,()=>{setPaused(false);sfx('click');},PAL.glim,true);
 }
 function drawResult(){
@@ -665,7 +671,11 @@ const HELP_PAGES=[
   {t:'Is it a real AI?',
    p:['Yes. This is a real neural network, the same kind of thing as the big AIs, only very small: 540 lines instead of billions.',
       'The cell is born knowing HOW to do its moves. What it learns from you is WHICH move each signal means.',
-      'Every brain starts with random lines, so every cell you raise learns a little differently.']}
+      'Every brain starts with random lines, so every cell you raise learns a little differently.']},
+  {t:'Free training: teach it anything',
+   p:['Here the cell has a body it can move freely: two arms, a tail, and it can stretch, lean, grow, spin and change colour.',
+      'SHOW: you pose it, beat by beat, like moving a puppet. It watches, and its brain moves a little toward what you showed. REMIND shows it again. Each time it gets closer.',
+      'TRY: it does the routine by itself. At first it wobbles. A TREAT makes it surer and steadier. POISON makes it doubt, and forget some of it. The right side of the brain shows one neuron for each body part.']}
 ];
 function wrapText(str,x,y,maxW,size,lh,col,wt){
   ctx.font=(wt||300)+' '+size+'px '+FONT;ctx.fillStyle=col;ctx.textAlign='left';ctx.textBaseline='middle';
@@ -715,6 +725,11 @@ function helpPicture(pg,x,y,w,h){
     drawSig(1,lx,cy,14,1);neuron(mx,cy-h*0.18,1);neuron(mx,cy+h*0.2,0.05);drawMoveIcon(5,rx,cy,14,1);
     ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(rx,cy,20,0,6.283);ctx.stroke();
     mono('confidence 87%   entropy 0.65 bits',cx,y+h-16,11,'rgba(150,235,225,0.9)','center');
+  }else if(pg===6){
+    const pA=restPose(),pB=restPose();pB[0]=0.9;pB[1]=0.8;pB[5]=0.3;pB[10]=0.7;pB[11]=0.5;
+    const u=(Math.sin(T*1.8)+1)/2,pp=pA.map((v,i)=>v+(pB[i]-v)*u);
+    drawStudioCell(pp,cx,cy+6,Math.min(1,h/260),{mini:false});
+    txt('show  →  try  →  treat',cx,y+h-16,12,'#ffd86b','center',500,1.5);
   }else{
     const s1=1+0.05*Math.sin(T*2);
     glow(x+w*0.28,cy,40,PAL.glim,0.5);ctx.fillStyle=hexA(PAL.glim,0.9);ctx.beginPath();ctx.arc(x+w*0.28,cy-6,13*s1,0,6.283);ctx.fill();
@@ -839,6 +854,7 @@ function simulate(dt){
 }
 function update(dt){
   st.t+=dt;
+  if(st.screen==='studio'){if(!st.paused&&st.help<0)studioUpdate(dt);return;}
   if(st.screen==='play'){
     simulate(dt);
     if(!st.paused){
@@ -865,6 +881,7 @@ function update(dt){
 function draw(){
   ctx.setTransform(dpr*S,0,0,dpr*S,0,0);ctx.clearRect(0,0,SW,SH);ui=[];
   if(st.screen==='title'){drawTitle();if(st.paused)drawMenu();if(st.help>=0)drawHelp();return;}
+  if(st.screen==='studio'){drawStudio();if(st.paused)drawMenu();if(st.help>=0)drawHelp();return;}
   drawBackdrop();drawMotes(0,0,SW,SH);
   drawTop();
   const pup=st.test?st.test.pup:st.pup,b=st.test?st.test.brain:st.brain;
@@ -898,6 +915,7 @@ cv.addEventListener('pointerdown',e=>{
   const b=hit(p.x,p.y);
   if(b){if(b.o.slider){drag.slider=b;setSlider(b,p.x);return;}pressed=b;return;}
   pressed=null;
+  if(st.screen==='studio'){if(!st.paused&&st.help<0)studioPointer('down',p);return;}
   if(st.screen!=='play'||st.paused||st.result||st.test||!inWorld(p))return;
   if(e.button===2){reward('poison',p.x,p.y);return;}
   {const pu=st.pup,P=w2s(pu.x,pu.y);if(Math.hypot(p.x-P.x,p.y-P.y)<52*P.k&&(pu.phase==='idle'||pu.phase==='rest'||pu.phase==='cue'))st.dragCell={dx:p.x-P.x,dy:p.y-P.y};}
@@ -909,6 +927,7 @@ cv.addEventListener('pointermove',e=>{
   const p=lp(e);st.hover=hit(p.x,p.y);
   cv.style.cursor=st.hover?'pointer':(st.screen==='play'&&!st.test&&inWorld(p)?'crosshair':'default');
   if(drag.slider){setSlider(drag.slider,p.x);return;}
+  if(st.screen==='studio'){if(studioPointer('move',p))cv.style.cursor='grabbing';else if(!st.hover)cv.style.cursor='default';return;}
   if(st.press&&Math.hypot(p.x-st.press.x,p.y-st.press.y)>10)st.moved=true;
   if(st.dragCell&&st.moved&&st.screen==='play'&&!st.test){
     const ar=L.arena,pu=st.pup;
@@ -918,11 +937,12 @@ cv.addEventListener('pointermove',e=>{
 });
 cv.addEventListener('pointerup',e=>{
   if(drag.slider){drag.slider=null;return;}
+  if(st.screen==='studio'){studioPointer('up',lp(e));return;}
   clearTimeout(st.longTimer);
   if(st.press&&!st.press.done&&!st.moved&&e.button===0){st.press.done=true;reward('treat',st.press.x,st.press.y);}
   st.press=null;st.dragCell=null;
 });
-cv.addEventListener('pointercancel',()=>{drag.slider=null;st.dragCell=null;st.press=null;clearTimeout(st.longTimer);pressed=null;});
+cv.addEventListener('pointercancel',()=>{sd.drag=null;drag.slider=null;st.dragCell=null;st.press=null;clearTimeout(st.longTimer);pressed=null;});
 cv.addEventListener('click',e=>{const p=lp(e),b=hit(p.x,p.y);if(pressed&&b&&b.id===pressed.id&&b.fn&&!b.o.disabled)b.fn();pressed=null;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 function setSlider(b,x){const s=b.o.slider;s.set(Math.max(0,Math.min(1,(x-s.x)/s.w)));}
@@ -931,7 +951,9 @@ addEventListener('keydown',e=>{
   if(st.help>=0){if(k==='escape'||k==='h')st.help=-1;else if(k==='arrowright'||k==='enter'||k===' '){e.preventDefault();st.help=st.help<HELP_PAGES.length-1?st.help+1:-1;}else if(k==='arrowleft')st.help=Math.max(0,st.help-1);return;}
   if(k==='h'){st.help=0;sfx('open');return;}
   if(st.screen==='title'){if(k==='enter'||k===' '){e.preventDefault();startAudio();if(st.hasSave)continueSave();else newBrain();st.screen='play';sfx('open');}return;}
+  if(st.screen==='studio'&&!st.paused&&sd.mode==='edit'&&k==='escape'){sd.mode='idle';return;}
   if(k==='escape'||k==='p'){setPaused(!st.paused);st.confirm=false;return;}
+  if(st.screen==='studio'){if(!st.paused)studioKey(k,e);return;}
   if(st.paused)return;
   if(k>='1'&&k<='8'){giveSignal(+k-1);return;}
   if(k==='g'||k===' '){e.preventDefault();reward('treat');}
